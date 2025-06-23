@@ -153,29 +153,19 @@ namespace EventEase.Controllers
                 .AsQueryable();
 
             if (!string.IsNullOrEmpty(searchEvent))
-            {
                 query = query.Where(b => b.Event.Name.Contains(searchEvent));
-            }
 
             if (!string.IsNullOrEmpty(venueFilter))
-            {
                 query = query.Where(b => b.Venue.Name == venueFilter);
-            }
 
             if (!string.IsNullOrEmpty(eventTypeFilter))
-            {
                 query = query.Where(b => b.Event.EventType.Name == eventTypeFilter);
-            }
 
             if (startDate.HasValue)
-            {
                 query = query.Where(b => b.StartDateTime >= startDate.Value);
-            }
 
             if (endDate.HasValue)
-            {
                 query = query.Where(b => b.EndDateTime <= endDate.Value);
-            }
 
             var summary = await query
                 .Select(b => new BookingSummaryViewModel
@@ -202,7 +192,6 @@ namespace EventEase.Controllers
 
             return View(summary);
         }
-
 
         public async Task<IActionResult> ExportToCsv(string searchEvent, string venueFilter, string eventTypeFilter, DateTime? startDate, DateTime? endDate)
         {

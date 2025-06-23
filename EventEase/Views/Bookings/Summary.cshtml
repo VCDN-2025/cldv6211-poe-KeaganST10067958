@@ -3,6 +3,7 @@
 @{
     ViewData["Title"] = "Booking Summary";
     var selectedVenue = Context.Request.Query["venueFilter"].ToString();
+    var selectedEventType = Context.Request.Query["eventTypeFilter"].ToString();
 }
 
 <h2 class="mb-4">📊 Booking Summary</h2>
@@ -22,22 +23,33 @@
             }
         </select>
     </div>
-    <div class="col-md-2">
+    <div class="col-md-3">
+        <select name="eventTypeFilter" class="form-control">
+            <option value="">All Event Types</option>
+            @foreach (var t in ViewBag.EventTypes as List<string>)
+            {
+                <option value="@t" selected="@(t == selectedEventType ? "selected" : null)">@t</option>
+            }
+        </select>
+    </div>
+    <div class="col-md-1">
         <input type="date" name="startDate" class="form-control"
                value="@Context.Request.Query["startDate"]" />
     </div>
-    <div class="col-md-2">
+    <div class="col-md-1">
         <input type="date" name="endDate" class="form-control"
                value="@Context.Request.Query["endDate"]" />
     </div>
-    <div class="col-md-2">
+    <div class="col-md-1">
         <button type="submit" class="btn btn-primary w-100">Filter</button>
     </div>
 </form>
 
+<!-- EXPORT TO CSV FORM WITH ALL FILTERS PRESERVED -->
 <form method="get" asp-action="ExportToCsv" asp-controller="Bookings">
     <input type="hidden" name="searchEvent" value="@Context.Request.Query["searchEvent"]" />
     <input type="hidden" name="venueFilter" value="@Context.Request.Query["venueFilter"]" />
+    <input type="hidden" name="eventTypeFilter" value="@Context.Request.Query["eventTypeFilter"]" />
     <input type="hidden" name="startDate" value="@Context.Request.Query["startDate"]" />
     <input type="hidden" name="endDate" value="@Context.Request.Query["endDate"]" />
     <button type="submit" class="btn btn-success mb-3">⬇ Download CSV</button>
