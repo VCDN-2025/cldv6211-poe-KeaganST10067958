@@ -61,16 +61,37 @@ namespace EventEase.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("BookingId,VenueId,EventId,StartDateTime,EndDateTime")] Booking booking)
         {
+            if (booking.StartDateTime >= booking.EndDateTime)
+            {
+                ModelState.AddModelError("", "End time must be after start time.");
+            }
+
+            // Check for overlapping bookings at the same venue
+            bool isOverlapping = await _context.Bookings.AnyAsync(b =>
+                b.VenueId == booking.VenueId &&
+                (
+                    (booking.StartDateTime < b.EndDateTime && booking.EndDateTime > b.StartDateTime)
+                )
+            );
+
+            if (isOverlapping)
+            {
+                var venue = await _context.Venues.FindAsync(booking.VenueId);
+                ModelState.AddModelError("", $"❌ Conflict: The venue '{venue?.Name}' is already booked during this time slot.");
+            }
+
             if (ModelState.IsValid)
             {
                 _context.Add(booking);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
+
             ViewData["EventId"] = new SelectList(_context.Events, "EventId", "Name", booking.EventId);
             ViewData["VenueId"] = new SelectList(_context.Venues, "VenueId", "Name", booking.VenueId);
             return View(booking);
         }
+
 
         // GET: Bookings/Edit/5
         public async Task<IActionResult> Edit(int? id)
