@@ -17,11 +17,13 @@ namespace EventEase.Controllers
             _blobService = blobService;
         }
 
+        // GET: Venues
         public async Task<IActionResult> Index()
         {
             return View(await _context.Venues.ToListAsync());
         }
 
+        // GET: Venues/Details/5
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null) return NotFound();
@@ -32,11 +34,13 @@ namespace EventEase.Controllers
             return View(venue);
         }
 
+        // GET: Venues/Create
         public IActionResult Create()
         {
             return View();
         }
 
+        // POST: Venues/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(Venue venue, IFormFile imageFile)
@@ -45,7 +49,6 @@ namespace EventEase.Controllers
             {
                 if (imageFile != null && imageFile.Length > 0)
                 {
-                    // Upload to Azure Blob and save URL
                     venue.ImageUrl = await _blobService.UploadFileAsync(imageFile);
                 }
 
@@ -57,6 +60,7 @@ namespace EventEase.Controllers
             return View(venue);
         }
 
+        // GET: Venues/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null) return NotFound();
@@ -67,6 +71,7 @@ namespace EventEase.Controllers
             return View(venue);
         }
 
+        // POST: Venues/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, Venue venue, IFormFile imageFile)
@@ -96,13 +101,30 @@ namespace EventEase.Controllers
             return View(venue);
         }
 
+        //GET: Venues/Delete/5
+        public async Task<IActionResult> Delete(int? id)
+        {
+            if (id == null) return NotFound();
 
+            var venue = await _context.Venues.FirstOrDefaultAsync(m => m.VenueId == id);
+            if (venue == null) return NotFound();
+
+            return View(venue);
+        }
+
+        // POST: Venues/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var venue = await _context.Venues.Include(v => v.Bookings).FirstOrDefaultAsync(v => v.VenueId == id);
-            if (venue == null) return NotFound();
+            var venue = await _context.Venues
+                .Include(v => v.Bookings)
+                .FirstOrDefaultAsync(v => v.VenueId == id);
+
+            if (venue == null)
+            {
+                return NotFound();
+            }
 
             if (venue.Bookings != null && venue.Bookings.Any())
             {
