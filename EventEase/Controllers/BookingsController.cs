@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using EventEase.Data;
 using EventEase.Models;
+using EventEase.Models.ViewModels;
 
 namespace EventEase.Controllers
 {
@@ -141,6 +142,25 @@ namespace EventEase.Controllers
         private bool BookingExists(int id)
         {
             return _context.Bookings.Any(e => e.BookingId == id);
+        }
+        public async Task<IActionResult> Summary()
+        {
+            var summary = await _context.Bookings
+                .Include(b => b.Venue)
+                .Include(b => b.Event)
+                .Select(b => new BookingSummaryViewModel
+                {
+                    BookingId = b.BookingId,
+                    VenueName = b.Venue.Name,
+                    VenueLocation = b.Venue.Location,
+                    EventName = b.Event.Name,
+                    EventType = b.Event.EventType,
+                    StartDateTime = b.StartDateTime,
+                    EndDateTime = b.EndDateTime
+                })
+                .ToListAsync();
+
+            return View(summary);
         }
     }
 }
