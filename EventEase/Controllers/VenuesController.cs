@@ -1,18 +1,20 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using EventEase.Data;
 using EventEase.Models;
+using EventEase.Services;
 
 namespace EventEase.Controllers
 {
     public class VenuesController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly BlobStorageService _blobService;
 
-        public VenuesController(ApplicationDbContext context)
+        public VenuesController(ApplicationDbContext context, BlobStorageService blobService)
         {
             _context = context;
+            _blobService = blobService;
         }
 
         public async Task<IActionResult> Index()
@@ -37,14 +39,21 @@ namespace EventEase.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("VenueId,Name,Location,Capacity,ImageUrl")] Venue venue)
+        public async Task<IActionResult> Create(Venue venue, IFormFile imageFile)
         {
             if (ModelState.IsValid)
             {
+                if (imageFile != null && imageFile.Length > 0)
+                {
+                    // Upload to Azure Blob and save URL
+                    venue.ImageUrl = await _blobService.UploadFileAsync(imageFile);
+                }
+
                 _context.Add(venue);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
+
             return View(venue);
         }
 
@@ -60,7 +69,7 @@ namespace EventEase.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("VenueId,Name,Location,Capacity,ImageUrl")] Venue venue)
+        public async Task<IActionResult> Edit(int id, Venue venue, IFormFile imageFile)
         {
             if (id != venue.VenueId) return NotFound();
 
@@ -68,6 +77,11 @@ namespace EventEase.Controllers
             {
                 try
                 {
+                    if (imageFile != null && imageFile.Length > 0)
+                    {
+                        venue.ImageUrl = await _blobService.UploadFileAsync(imageFile);
+                    }
+
                     _context.Update(venue);
                     await _context.SaveChangesAsync();
                 }
@@ -78,18 +92,10 @@ namespace EventEase.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            return View(venue);
-        }
-
-        public async Task<IActionResult> Delete(int? id)
-        {
-            if (id == null) return NotFound();
-
-            var venue = await _context.Venues.FirstOrDefaultAsync(m => m.VenueId == id);
-            if (venue == null) return NotFound();
 
             return View(venue);
         }
+
 
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]

@@ -13,7 +13,7 @@ namespace EventEase.Models
 
         public int Capacity { get; set; }
 
-        public string ImageUrl { get; set; }  // Placeholder for now
+        public string? ImageUrl { get; set; }
 
         public ICollection<Booking>? Bookings { get; set; }
     }
