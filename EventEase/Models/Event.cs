@@ -11,10 +11,12 @@ namespace EventEase.Models
 
         public string Description { get; set; }
 
-        public string EventType { get; set; }
-
         public string ImageUrl { get; set; }
 
         public ICollection<Booking>? Bookings { get; set; }
+
+        public int? EventTypeId { get; set; }
+        public EventType? EventType { get; set; }
+
     }
 }

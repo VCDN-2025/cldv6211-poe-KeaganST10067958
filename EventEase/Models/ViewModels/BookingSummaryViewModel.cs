@@ -9,7 +9,6 @@
 
         public string EventName { get; set; }
         public string EventType { get; set; }
-
         public DateTime StartDateTime { get; set; }
         public DateTime EndDateTime { get; set; }
         public string? SearchEventName { get; set; }

@@ -144,11 +144,12 @@ namespace EventEase.Controllers
         {
             return _context.Bookings.Any(e => e.BookingId == id);
         }
-        public async Task<IActionResult> Summary(string searchEvent, string venueFilter, DateTime? startDate, DateTime? endDate)
+        public async Task<IActionResult> Summary(string searchEvent, string venueFilter, string eventTypeFilter, DateTime? startDate, DateTime? endDate)
         {
             var query = _context.Bookings
                 .Include(b => b.Venue)
                 .Include(b => b.Event)
+                    .ThenInclude(e => e.EventType)
                 .AsQueryable();
 
             if (!string.IsNullOrEmpty(searchEvent))
@@ -159,6 +160,11 @@ namespace EventEase.Controllers
             if (!string.IsNullOrEmpty(venueFilter))
             {
                 query = query.Where(b => b.Venue.Name == venueFilter);
+            }
+
+            if (!string.IsNullOrEmpty(eventTypeFilter))
+            {
+                query = query.Where(b => b.Event.EventType.Name == eventTypeFilter);
             }
 
             if (startDate.HasValue)
@@ -178,55 +184,64 @@ namespace EventEase.Controllers
                     VenueName = b.Venue.Name,
                     VenueLocation = b.Venue.Location,
                     EventName = b.Event.Name,
-                    EventType = b.Event.EventType,
+                    EventType = b.Event.EventType != null ? b.Event.EventType.Name : "",
                     StartDateTime = b.StartDateTime,
                     EndDateTime = b.EndDateTime
                 })
                 .ToListAsync();
 
-            // Pass unique venue list to the view
             ViewBag.Venues = await _context.Venues
                 .Select(v => v.Name)
+                .Distinct()
+                .ToListAsync();
+
+            ViewBag.EventTypes = await _context.EventTypes
+                .Select(et => et.Name)
                 .Distinct()
                 .ToListAsync();
 
             return View(summary);
         }
 
-public async Task<IActionResult> ExportToCsv(string searchEvent, string venueFilter, DateTime? startDate, DateTime? endDate)
-    {
-        var query = _context.Bookings
-            .Include(b => b.Venue)
-            .Include(b => b.Event)
-            .AsQueryable();
 
-        if (!string.IsNullOrEmpty(searchEvent))
-            query = query.Where(b => b.Event.Name.Contains(searchEvent));
-
-        if (!string.IsNullOrEmpty(venueFilter))
-            query = query.Where(b => b.Venue.Name == venueFilter);
-
-        if (startDate.HasValue)
-            query = query.Where(b => b.StartDateTime >= startDate.Value);
-
-        if (endDate.HasValue)
-            query = query.Where(b => b.EndDateTime <= endDate.Value);
-
-        var bookings = await query.ToListAsync();
-
-        var csv = new StringBuilder();
-        csv.AppendLine("Booking ID,Venue,Location,Venue Image URL,Event,Type,Event Image URL,Start,End");
-
-        foreach (var b in bookings)
+        public async Task<IActionResult> ExportToCsv(string searchEvent, string venueFilter, string eventTypeFilter, DateTime? startDate, DateTime? endDate)
         {
-            csv.AppendLine($"{b.BookingId},{b.Venue.Name},{b.Venue.Location},{b.Venue.ImageUrl},{b.Event.Name},{b.Event.EventType},{b.Event.ImageUrl},{b.StartDateTime:g},{b.EndDateTime:g}");
+            var query = _context.Bookings
+                .Include(b => b.Venue)
+                .Include(b => b.Event)
+                    .ThenInclude(e => e.EventType)
+                .AsQueryable();
+
+            if (!string.IsNullOrEmpty(searchEvent))
+                query = query.Where(b => b.Event.Name.Contains(searchEvent));
+
+            if (!string.IsNullOrEmpty(venueFilter))
+                query = query.Where(b => b.Venue.Name == venueFilter);
+
+            if (!string.IsNullOrEmpty(eventTypeFilter))
+                query = query.Where(b => b.Event.EventType.Name == eventTypeFilter);
+
+            if (startDate.HasValue)
+                query = query.Where(b => b.StartDateTime >= startDate.Value);
+
+            if (endDate.HasValue)
+                query = query.Where(b => b.EndDateTime <= endDate.Value);
+
+            var bookings = await query.ToListAsync();
+
+            var csv = new StringBuilder();
+            csv.AppendLine("Booking ID,Venue,Location,Venue Image URL,Event,Type,Event Image URL,Start,End");
+
+            foreach (var b in bookings)
+            {
+                csv.AppendLine($"{b.BookingId},{b.Venue.Name},{b.Venue.Location},{b.Venue.ImageUrl},{b.Event.Name},{b.Event.EventType?.Name},{b.Event.ImageUrl},{b.StartDateTime:g},{b.EndDateTime:g}");
+            }
+
+            byte[] buffer = Encoding.UTF8.GetBytes(csv.ToString());
+            return File(buffer, "text/csv", "BookingSummary.csv");
         }
 
-        byte[] buffer = Encoding.UTF8.GetBytes(csv.ToString());
-        return File(buffer, "text/csv", "BookingSummary.csv");
     }
 
 }
-
-    }
 
