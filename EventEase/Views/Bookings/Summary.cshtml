@@ -2,9 +2,39 @@
 
 @{
     ViewData["Title"] = "Booking Summary";
+    var selectedVenue = Context.Request.Query["venueFilter"].ToString();
 }
 
 <h2 class="mb-4">📊 Booking Summary</h2>
+
+<!-- FILTER FORM -->
+<form method="get" class="row mb-4">
+    <div class="col-md-3">
+        <input type="text" name="searchEvent" class="form-control" placeholder="Search by Event Name"
+               value="@Context.Request.Query["searchEvent"]" />
+    </div>
+    <div class="col-md-3">
+        <select name="venueFilter" class="form-control">
+            <option value="">All Venues</option>
+            @foreach (var v in ViewBag.Venues as List<string>)
+            {
+                <option value="@v" selected="@(v == selectedVenue ? "selected" : null)">@v</option>
+            }
+        </select>
+    </div>
+    <div class="col-md-2">
+        <input type="date" name="startDate" class="form-control"
+               value="@Context.Request.Query["startDate"]" />
+    </div>
+    <div class="col-md-2">
+        <input type="date" name="endDate" class="form-control"
+               value="@Context.Request.Query["endDate"]" />
+    </div>
+    <div class="col-md-2">
+        <button type="submit" class="btn btn-primary w-100">Filter</button>
+    </div>
+</form>
+
 
 <table class="table table-bordered table-striped text-white">
     <thead>

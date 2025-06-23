@@ -12,5 +12,10 @@
 
         public DateTime StartDateTime { get; set; }
         public DateTime EndDateTime { get; set; }
+        public string? SearchEventName { get; set; }
+        public string? SelectedVenueName { get; set; }
+        public DateTime? StartDateFilter { get; set; }
+        public DateTime? EndDateFilter { get; set; }
+
     }
 }

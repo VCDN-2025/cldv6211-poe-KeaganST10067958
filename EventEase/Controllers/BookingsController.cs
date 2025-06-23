@@ -143,11 +143,34 @@ namespace EventEase.Controllers
         {
             return _context.Bookings.Any(e => e.BookingId == id);
         }
-        public async Task<IActionResult> Summary()
+        public async Task<IActionResult> Summary(string searchEvent, string venueFilter, DateTime? startDate, DateTime? endDate)
         {
-            var summary = await _context.Bookings
+            var query = _context.Bookings
                 .Include(b => b.Venue)
                 .Include(b => b.Event)
+                .AsQueryable();
+
+            if (!string.IsNullOrEmpty(searchEvent))
+            {
+                query = query.Where(b => b.Event.Name.Contains(searchEvent));
+            }
+
+            if (!string.IsNullOrEmpty(venueFilter))
+            {
+                query = query.Where(b => b.Venue.Name == venueFilter);
+            }
+
+            if (startDate.HasValue)
+            {
+                query = query.Where(b => b.StartDateTime >= startDate.Value);
+            }
+
+            if (endDate.HasValue)
+            {
+                query = query.Where(b => b.EndDateTime <= endDate.Value);
+            }
+
+            var summary = await query
                 .Select(b => new BookingSummaryViewModel
                 {
                     BookingId = b.BookingId,
@@ -160,7 +183,14 @@ namespace EventEase.Controllers
                 })
                 .ToListAsync();
 
+            // Pass unique venue list to the view
+            ViewBag.Venues = await _context.Venues
+                .Select(v => v.Name)
+                .Distinct()
+                .ToListAsync();
+
             return View(summary);
         }
+
     }
 }
