@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using EventEase.Data;
 using EventEase.Models;
 using EventEase.Models.ViewModels;
+using System.Text;
 
 namespace EventEase.Controllers
 {
@@ -192,5 +193,40 @@ namespace EventEase.Controllers
             return View(summary);
         }
 
+public async Task<IActionResult> ExportToCsv(string searchEvent, string venueFilter, DateTime? startDate, DateTime? endDate)
+    {
+        var query = _context.Bookings
+            .Include(b => b.Venue)
+            .Include(b => b.Event)
+            .AsQueryable();
+
+        if (!string.IsNullOrEmpty(searchEvent))
+            query = query.Where(b => b.Event.Name.Contains(searchEvent));
+
+        if (!string.IsNullOrEmpty(venueFilter))
+            query = query.Where(b => b.Venue.Name == venueFilter);
+
+        if (startDate.HasValue)
+            query = query.Where(b => b.StartDateTime >= startDate.Value);
+
+        if (endDate.HasValue)
+            query = query.Where(b => b.EndDateTime <= endDate.Value);
+
+        var bookings = await query.ToListAsync();
+
+        var csv = new StringBuilder();
+        csv.AppendLine("Booking ID,Venue,Location,Venue Image URL,Event,Type,Event Image URL,Start,End");
+
+        foreach (var b in bookings)
+        {
+            csv.AppendLine($"{b.BookingId},{b.Venue.Name},{b.Venue.Location},{b.Venue.ImageUrl},{b.Event.Name},{b.Event.EventType},{b.Event.ImageUrl},{b.StartDateTime:g},{b.EndDateTime:g}");
+        }
+
+        byte[] buffer = Encoding.UTF8.GetBytes(csv.ToString());
+        return File(buffer, "text/csv", "BookingSummary.csv");
     }
+
 }
+
+    }
+

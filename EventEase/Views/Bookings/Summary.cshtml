@@ -35,6 +35,13 @@
     </div>
 </form>
 
+<form method="get" asp-action="ExportToCsv" asp-controller="Bookings">
+    <input type="hidden" name="searchEvent" value="@Context.Request.Query["searchEvent"]" />
+    <input type="hidden" name="venueFilter" value="@Context.Request.Query["venueFilter"]" />
+    <input type="hidden" name="startDate" value="@Context.Request.Query["startDate"]" />
+    <input type="hidden" name="endDate" value="@Context.Request.Query["endDate"]" />
+    <button type="submit" class="btn btn-success mb-3">⬇ Download CSV</button>
+</form>
 
 <table class="table table-bordered table-striped text-white">
     <thead>
